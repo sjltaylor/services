@@ -26,7 +26,7 @@ class Services
   end
 
   def raise_unless_allowed(operation, context)
-    predicate_name = "#{operation}?"
+    predicate_name = :"allow_#{operation}?"
     raise NotAllowed unless @container.respond_to?(predicate_name) && @container.send(predicate_name, context)
     return nil
   end

@@ -38,12 +38,12 @@ describe Services do
       end
     end
     it 'returns the value from the service function' do
-      container.stub(:service_function?).and_return(true)
+      container.stub(:allow_service_function?).and_return(true)
       container.stub(:service_function).and_return('results of service function call')
       services.service_function(context).should == 'results of service function call'
     end
     it 'passes the context to the service function' do
-      container.stub(:service_function?).and_return(true)
+      container.stub(:allow_service_function?).and_return(true)
       container.stub(:service_function)
       services.service_function(context)
       container.should have_received(:service_function).with(context)
@@ -68,7 +68,7 @@ describe Services do
     let(:container) { double(:container) }
     let(:context) { double(:context) }
     let(:operation_name) { :restricted_operation }
-    let(:predicate_name) { "#{operation_name}?".to_sym }
+    let(:predicate_name) { "allow_#{operation_name}?".to_sym }
     let(:allowed) { true }
 
     before(:each) { container.stub(predicate_name).and_return(allowed) }
@@ -106,7 +106,7 @@ describe Services do
 
     context 'when a permissions predicate is not defined' do
       let(:container) { Object.new }
-      let(:predicate_name) { :none_existant_predicate? }
+      let(:predicate_name) { :allow_none_existant_predicate? }
       it 'raises a Services::NotAllowed' do
         expect{raise_unless_allowed}.to raise_error(Services::NotAllowed)
       end
