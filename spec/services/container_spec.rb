@@ -1,30 +1,17 @@
 require 'spec_helper'
 
 describe Services::Container do
-  it 'includes all services modules from app/services' do
-    described_class.included_modules.should include(Api::ApiServices, EmailServices, PhotoServices)
-  end
+  let(:container) { described_class.new }
 
-  describe '.modules' do
-    let(:modules) { described_class.modules }
-    it 'is an array' do
-      modules.should be_instance_of Array
+  describe '#protect' do
+    it 'returns a Services::Sentry' do
+      container.protect.should be_instance_of Services::Sentry
     end
-    it 'includes service modules' do
-      modules.should include(PhotoServices, EmailServices)
-    end
-    it 'does not include modules in files with names not ending in "_services.rb"' do
-      modules.should_not include(ModuleFile)
-    end
-    it 'does not include classes' do
-      modules.should_not include(ClassFile)
-      modules.should_not include(Api::ApiConnector)
-    end
-    it 'does not include classes with file names ending in _services.rb' do
-      modules.should_not include(ClassServices)
-    end
-    it 'includes modules within subdirectories' do
-      modules.should include(Api::ApiServices)
+    describe 'the returned Service::Sentry' do
+      let(:sentry) { container.protect }
+      it 'has the Services::Container instance as it container' do
+        sentry.protected_object.should be container
+      end
     end
   end
 end

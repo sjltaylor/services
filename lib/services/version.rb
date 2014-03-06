@@ -1,3 +1,3 @@
-class Services
-  VERSION = "0.0.1"
+module Services
+  VERSION = "0.0.2"
 end

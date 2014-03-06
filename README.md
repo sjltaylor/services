@@ -1,3 +1,5 @@
+# Services
+
 Key Decisions
 
 * Services use resolve
@@ -16,6 +18,8 @@ Limitations
 # Services
 
 TODO: Write a gem description
+
+service calls can raise NotAllowed (403) or ContextNotValid (406)
 
 ## Installation
 

@@ -1,33 +1,28 @@
+require 'pathname'
 require 'active_support/inflector'
-require 'resolve'
 require 'services/version'
 require 'services/container'
+require 'services/sentry'
 
-class Services
-  class NotAllowed < StandardError; end
+module Services
+  module_function
 
-  def initialize(opts={})
-    @container = Container.resolve(opts)
-  end
+  def modules_in(search_path)
+    search_path = Pathname.new(search_path).expand_path.to_s
 
-  def respond_to?(method_name)
-    super || @container.respond_to?(method_name)
-  end
-
-  def method_missing(method_name, *args, &block)
-    container = @container
-
-    super unless container.respond_to?(method_name)
-    (class << self; self; end).send(:define_method, method_name) do |*m_args|
-      raise_unless_allowed(method_name, *m_args)
-      return container.send(method_name, *m_args, &block)
+    Dir["#{search_path}/**/*_services.rb"].reduce([]) do |memo, path|
+      require path
+      name_with_namespace = path[search_path.length..-(1 + File.extname(path).length)]
+      constant = name_with_namespace.camelize.constantize
+      memo.push(constant) if constant.instance_of?(Module)
+      memo
     end
-    send(method_name, *args, &block)
   end
 
-  def raise_unless_allowed(operation, context)
-    predicate_name = :"allow_#{operation}?"
-    raise NotAllowed unless @container.respond_to?(predicate_name) && @container.send(predicate_name, context)
-    return nil
+  def from(path)
+    Class.new(Container).tap do |klass|
+      modules_in(path).each {|m| klass.include(m) }
+      klass.instance_variable_set(:@services_path, path)
+    end
   end
 end

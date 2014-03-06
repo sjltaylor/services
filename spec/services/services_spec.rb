@@ -2,114 +2,50 @@ require 'spec_helper'
 
 describe Services do
   # see app/services skeleton rails app excerpt for expected file layout
-  let(:opts) { { my_service: :my_service } }
-  let(:services) { Services.resolve(opts) }
+  let(:path) { 'app/services' }
 
-  describe 'services container' do
-    let(:container) { services.instance_variable_get(:@container) }
+  describe '.from(path)' do
+    let(:services_klass) { described_class.from(path) }
+    let(:modules) { [ Api::ApiServices, EmailServices, PhotoServices ] }
 
-    it 'is created with all service dependencies satisfied (using Resolve)' do
-      container.my_service.should eq :my_service
-      container.class_file.should be_instance_of ClassFile
-      container.api_connector.should be_instance_of Api::ApiConnector
-    end
+    before(:each) { Services.stub(:modules_in).with(path).and_return(modules) }
+
     it 'is an instance of Services::Container' do
-      container.should be_instance_of Services::Container
+      services_klass.should be < Services::Container
+    end
+
+    describe '@services_path' do
+      it 'is set to that from which the services were loaded' do
+        services_klass.instance_variable_get(:@services_path).should == path
+      end
+    end
+
+    it 'includes all services modules from the specified path' do
+      services_klass.included_modules.should include(*modules)
     end
   end
 
-  describe 'service function proxying' do
-    let(:container) { double(:container) }
-    let(:context) { double(:context) }
+  describe '.modules_in(path)' do
+    let(:modules) { described_class.modules_in(path) }
 
-    before(:each) { services.instance_variable_set(:@container, container) }
-
-    describe 'checking for permission' do
-      before(:each) { container.stub(:my_service_function) }
-      before(:each) { services.stub(:raise_unless_allowed) }
-
-      it 'calls raise_unless_allowed before the service function' do
-        container.stub(:service_function)
-        services.stub(:raise_unless_allowed).with(:service_function, context) do
-          container.should_not have_received(:service_function)
-        end
-        services.service_function(context)
-        services.should have_received(:raise_unless_allowed).with(:service_function, context)
-      end
+    it 'is an array' do
+      modules.should be_instance_of Array
     end
-    it 'returns the value from the service function' do
-      container.stub(:allow_service_function?).and_return(true)
-      container.stub(:service_function).and_return('results of service function call')
-      services.service_function(context).should == 'results of service function call'
+    it 'includes service modules' do
+      modules.should include(PhotoServices, EmailServices)
     end
-    it 'passes the context to the service function' do
-      container.stub(:allow_service_function?).and_return(true)
-      container.stub(:service_function)
-      services.service_function(context)
-      container.should have_received(:service_function).with(context)
+    it 'does not include modules in files with names not ending in "_services.rb"' do
+      modules.should_not include(ModuleFile)
     end
-
-    describe '#respond_to?' do
-      it 'returns true if the instance responds to a method' do
-        services.should respond_to :to_s
-      end
-      it 'returns true if the services modules responds to a method' do
-        def container.send_email(opts={})
-        end
-        services.should respond_to :send_email
-      end
-      it 'returns false if neither the instance or any of the service modules define a method' do
-        services.should_not respond_to :howl_like_a_wolf
-      end
+    it 'does not include classes' do
+      modules.should_not include(ClassFile)
+      modules.should_not include(Api::ApiConnector)
     end
-  end
-
-  describe '#raise_unless_allowed' do
-    let(:container) { double(:container) }
-    let(:context) { double(:context) }
-    let(:operation_name) { :restricted_operation }
-    let(:predicate_name) { "allow_#{operation_name}?".to_sym }
-    let(:allowed) { true }
-
-    before(:each) { container.stub(predicate_name).and_return(allowed) }
-    before(:each) { services.instance_variable_set(:@container, container) }
-
-    def raise_unless_allowed
-      services.raise_unless_allowed(operation_name, context)
+    it 'does not include classes with file names ending in _services.rb' do
+      modules.should_not include(ClassServices)
     end
-
-    describe 'parameter passing' do
-      before(:each) { raise_unless_allowed }
-
-      it 'passes the context to the predicate' do
-        container.should have_received(predicate_name).with(context)
-      end
-    end
-
-    context 'when the operation is allowed' do
-
-      # it returns parametes so that any resources which had to be
-      # retrived, such as database records, can be reused by the
-      # calling function
-      it 'returns nil' do
-        raise_unless_allowed.should be_nil
-      end
-    end
-
-    context 'when the operation is prohibited' do
-      let(:allowed) { false }
-
-      it 'raises a Services::NotAllowed' do
-        expect{raise_unless_allowed}.to raise_error(Services::NotAllowed)
-      end
-    end
-
-    context 'when a permissions predicate is not defined' do
-      let(:container) { Object.new }
-      let(:predicate_name) { :allow_none_existant_predicate? }
-      it 'raises a Services::NotAllowed' do
-        expect{raise_unless_allowed}.to raise_error(Services::NotAllowed)
-      end
+    it 'includes modules within subdirectories' do
+      modules.should include(Api::ApiServices)
     end
   end
 end
