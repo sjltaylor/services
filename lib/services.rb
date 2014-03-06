@@ -21,7 +21,7 @@ module Services
 
   def from(path)
     Class.new(Container).tap do |klass|
-      modules_in(path).each {|m| klass.include(m) }
+      klass.include(*modules_in(path))
       klass.instance_variable_set(:@services_path, path)
     end
   end
