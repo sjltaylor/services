@@ -107,16 +107,16 @@ describe Services::Sentry do
     context 'when the operation is prohibited' do
       let(:allowed) { false }
 
-      it 'raises a Services::NotAllowed' do
-        expect{raise_unless_allowed}.to raise_error(Services::Sentry::NotAllowed)
+      it 'raises a Services::Sentry::NotAllowed' do
+        expect{raise_unless_allowed}.to raise_error(Services::Sentry::NotAllowed, operation_name.to_s)
       end
     end
 
     context 'when a permissions predicate is not defined' do
       let(:protected_object) { Object.new }
       let(:predicate_name) { :allow_none_existant_predicate? }
-      it 'raises a Services::NotAllowed' do
-        expect{raise_unless_allowed}.to raise_error(Services::Sentry::NotAllowed)
+      it 'raises a Services::Sentry::NotAllowed' do
+        expect{raise_unless_allowed}.to raise_error(Services::Sentry::NotAllowed, operation_name.to_s)
       end
     end
   end
