@@ -31,9 +31,9 @@ module Services
       send(method_name, *args, &block)
     end
 
-    def raise_unless_allowed(operation, context)
+    def raise_unless_allowed(operation, *args)
       predicate_name = :"allow_#{operation}?"
-      raise NotAllowed unless @protected_object.respond_to?(predicate_name) && @protected_object.send(predicate_name, context)
+      raise NotAllowed unless @protected_object.respond_to?(predicate_name) && @protected_object.send(predicate_name, *args)
       return nil
     end
   end
