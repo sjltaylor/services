@@ -9,7 +9,11 @@ module Services
     end
 
     def respond_to?(method_name)
-      super || @protected_object.respond_to?(method_name)
+      @protected_object.respond_to?(method_name) || super
+    end
+
+    def respond_to_missing?(method_name, include_private = false)
+      @protected_object.respond_to?(method_name) || super
     end
 
     def method_missing(method_name, *args, &block)

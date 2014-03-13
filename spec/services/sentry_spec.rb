@@ -55,6 +55,20 @@ describe Services::Sentry do
         sentry.should_not respond_to :howl_like_a_wolf
       end
     end
+
+    describe '#respond_to_missing?' do
+      it 'returns true if the instance responds to a method' do
+        sentry.should respond_to :to_s
+      end
+      it 'returns true if the protected_object responds to a method' do
+        def protected_object.send_email(opts={})
+        end
+        sentry.should respond_to :send_email
+      end
+      it 'returns false if neither the instance or any of the service modules define a method' do
+        sentry.should_not respond_to :howl_like_a_wolf
+      end
+    end
   end
 
   describe '#raise_unless_allowed' do
@@ -68,30 +82,6 @@ describe Services::Sentry do
 
     def raise_unless_allowed
       sentry.raise_unless_allowed(operation_name, context)
-    end
-
-    describe 'parameter passing' do
-      let(:predicate_arity) { -1 }
-      let(:predicate_method) { double(:predicate_method, arity: predicate_arity) }
-      before(:each) { raise_unless_allowed }
-      before(:each) do
-        protected_object.stub(:method).with(predicate_name).and_return(predicate_method)
-      end
-
-      describe 'when the predicate has a non-zero arity' do
-        it 'passes the context to the predicate' do
-          protected_object.should have_received(predicate_name).with(context)
-        end
-      end
-
-      describe 'when the predicate has a zero arity' do
-        def raise_unless_allowed
-          sentry.raise_unless_allowed(operation_name)
-        end
-        it 'passes nothing to the predicate' do
-          protected_object.should have_received(predicate_name).with(no_args)
-        end
-      end
     end
 
     context 'when the operation is allowed' do
