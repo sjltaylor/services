@@ -20,6 +20,8 @@ The "Service" is not the class/module but the method... 'function' that performs
 It uses `method_missing` and only cares that the protect object respond_to? because it makes no assumptions about how the protected object implements the responded_to method (e.g. it might use method missing itself)
 
 
+`allow(service_name)`
+
 when defining a service and its permissions predicate, the parameters must nmatch
 
 Limitations
